@@ -2,54 +2,101 @@ import time
 import timeit
 import sqlite3
 
+# --> connection with databases
 conn = sqlite3.connect("calculations.db")
 c = conn.cursor()
-# c.execute("""CREATE TABLE calculations (
-#             aufgabe text,
-#             ergebnis integer
+conn_ranking = sqlite3.connect("ranking.db")
+c_ranking = conn_ranking.cursor()
+# c.execute("""CREATE TABLE ranking (
+#             Vorname text,
+#             Nachname text,
+#             Universität text,
+#             Zeit real
 #             )""")
-#c.execute("INSERT INTO calculations VALUES('18+18-36+1', 1)")
+#c.execute("INSERT INTO ranking VALUES('Marvin','Grocholl','HU Berlin', 15.0)")
+# --> calling of a random equation for matheaufgabe 
 c.execute("SELECT * FROM calculations ORDER BY RANDOM() LIMIT 1;")
-
 calculation = (c.fetchone())
 calculation_list = list(calculation)
 equation = calculation_list[0]
 solution = calculation_list[1]
 conn.commit()
 conn.close()
+# --> Calling parts of the ranking database to check if it works properly
+# calculation = (c_ranking.fetchone())
+# calculation_list = list(calculation)
+# equation = calculation_list[0]
+# solution = calculation_list[1]
+# print(equation + " " + solution)
+# conn_ranking.commit()
+# conn_ranking.close()
+
+# variables, which I define before the start to make them accessible to the functions:
+added_time = 0
+start = time.time()
 
 def zeit_ende():
     end = time.time()
     finale_zeit = end - start + added_time
-    print("%.2f" % finale_zeit)
+    finale_zeit_zwei_kommastellen = "%.2f" % finale_zeit
+    print("Deine Zeit ist: " + finale_zeit_zwei_kommastellen + " Sekunden")
+    return finale_zeit_zwei_kommastellen
 
-start = time.time()
-
-print("Willkommen zu einer langen, gefährlichen Reise.")
-answer = input("Bist du sicher, dass du dich ins Jurastudium wagen willst? (ja/nein)")
-# .lower() -> sets all to lower 
-# .strip() -> gets rid of any lowercases around the word 
-if answer.lower().strip() == "ja":
-    print("Mutig! Es werden dich so einige Challenges erwarten, aber wenn du sie schaffst gebührt dir viel Gel... ähm viel Ruhm und Ehre.")
-    time.sleep(3)
+def bierball_turnier():  
     answer = input("Es ist Erstiwoche und die Fachschaft ruft zum Bierballturnier (der einzig wahre Name) auf. Gehst du hin? (ja/nein)")
     if answer.lower().strip() =="ja":
         print("Es war ein aufregender Abend und du hast wichtige Bekanntschaften gemacht. Vielleicht helfen sie dir im Laufe des Studiums weiter.")
         kontakt = True
         added_time = 3 #adding time because of drinking
         zeit_ende()
-        print("Achtug! Juristen sind dafür bekannt, dass sie SEHR GUT in Mathe sind. Was ergibt",equation, "?" )
-        answer = input()
-        if int(answer) == solution:
-            print("Good job!")
-        else:
-            print("try again!")
     else:
         print("Du möchtest also den absoluten Fokus auf die Straße bringen. Hustle mode: ON")
         kontakt = False
         added_time = 0
-        zeit_ende()
+        zeit_ende()   
 
-else: 
+def matheaufgabe():
+    # I shoulf bring the "Achtung..." at the end of the last function to only ask the input question in this function, so it can be repeated again if the answer is wrong
+    print("Achtug! Juristen sind dafür bekannt, dass sie SEHR GUT in Mathe sind. Was ergibt",equation, "?" )
+    answer = input()
+    if int(answer) == solution:
+        print("Good job!")
+    else:
+        print("Falsch, versuche es nochmal:")
+        matheaufgabe() 
+
+def leaderboard_entry(a):
+    answer = input("Du hast es geschafft! Möchtest du dich ins Leaderboard eintragen? (ja/nein)")
+    if answer.lower().strip() =="ja":
+        first_name = input("Stark, wie heißt du (Vorname)?")
+        last_name = input("Nett dich kennenzulernen " + first_name + ". Was ist dein Nachname?")
+        uni = input("Wo studierst du?")
+        time = a
+        c_ranking.execute("INSERT INTO ranking (Vorname, Nachname, Universität, Zeit) VALUES (?, ?, ?, ?)",(first_name,last_name,uni,time))
+        print_names = c_ranking.execute("SELECT * FROM ranking WHERE Nachname IS 'Grocholl';")
+        conn_ranking.commit()
+        conn_ranking.close() #only close at the very end of using SQLite3
+    else:
+        print("Okay, dann scheint die Zeit ja nicht so 'dolle' gewesen zu sein! Viel Glück beim nächsten Mal")
+
+
+
+
+
+
+
+# --> start of game
+print("Willkommen zu einer langen, gefährlichen Reise.")
+answer = input("Bist du sicher, dass du dich ins Jurastudium wagen willst? (ja/nein)")
+# .lower() -> sets all to lower 
+# .strip() -> gets rid of any lowercases around the word 
+if answer.lower().strip() == "nein":
     print("Gute Entscheidung, ich war mir auch nicht sicher ob du es in dir hast.")
-    #do I need to end the time function?
+
+elif answer.lower().strip() == "ja":
+    print("Mutig! Es werden dich so einige Challenges erwarten, aber wenn du sie schaffst gebührt dir viel Gel... ähm viel Ruhm und Ehre.")
+    time.sleep(3)
+    matheaufgabe()
+    zeit_ende()
+    leaderboard_entry(zeit_ende) #das mache ich um finale_zeit_zwei_kommastellen in die leaderboard function zu bekommen, dann bekomme ich aber einen Error
+
