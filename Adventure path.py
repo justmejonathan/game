@@ -65,23 +65,25 @@ def matheaufgabe():
         print("Falsch, versuche es nochmal:")
         matheaufgabe() 
 
-def leaderboard_entry(a):
+def leaderboard_entry(time):
     answer = input("Du hast es geschafft! Möchtest du dich ins Leaderboard eintragen? (ja/nein)")
     if answer.lower().strip() =="ja":
+        conn_ranking = sqlite3.connect("ranking.db")
         first_name = input("Stark, wie heißt du (Vorname)?")
         last_name = input("Nett dich kennenzulernen " + first_name + ". Was ist dein Nachname?")
         uni = input("Wo studierst du?")
-        time = a
         c_ranking.execute("INSERT INTO ranking (Vorname, Nachname, Universität, Zeit) VALUES (?, ?, ?, ?)",(first_name,last_name,uni,time))
-        print_names = c_ranking.execute("SELECT * FROM ranking WHERE Nachname IS 'Grocholl';")
+        c_ranking.execute("SELECT ROW_NUMBER () OVER (ORDER BY Zeit ASC) RowNum, Vorname, Nachname, Universität, Zeit FROM ranking  WHERE Zeit=?", (time, ))
+        print_pos = c_ranking.fetchall()
+        print("Du bist auf Position " + str(print_pos[0]) + " gelandet.")
         conn_ranking.commit()
         conn_ranking.close() #only close at the very end of using SQLite3
     else:
         print("Okay, dann scheint die Zeit ja nicht so 'dolle' gewesen zu sein! Viel Glück beim nächsten Mal")
-
-
-
-
+        #c_ranking.execute("SELECT ROW_NUMBER () OVER (ORDER BY Zeit ASC) RowNum, Vorname, Nachname, Universität, Zeit FROM ranking")
+        c_ranking.execute("SELECT * FROM ranking")
+        print_pos = c_ranking.fetchall()
+        print(print_pos)
 
 
 
@@ -97,6 +99,5 @@ elif answer.lower().strip() == "ja":
     print("Mutig! Es werden dich so einige Challenges erwarten, aber wenn du sie schaffst gebührt dir viel Gel... ähm viel Ruhm und Ehre.")
     time.sleep(3)
     matheaufgabe()
-    zeit_ende()
-    leaderboard_entry(zeit_ende) #das mache ich um finale_zeit_zwei_kommastellen in die leaderboard function zu bekommen, dann bekomme ich aber einen Error
+    leaderboard_entry(zeit_ende()) #das mache ich um finale_zeit_zwei_kommastellen in die leaderboard function zu bekommen, dann bekomme ich aber einen Error
 
