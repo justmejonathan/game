@@ -1,5 +1,0 @@
-def get_count(sentence):
-    letter_list = sentence.split()
-    print(letter_list)
-
-get_count("hello my name is marvin"

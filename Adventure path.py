@@ -73,11 +73,11 @@ def leaderboard_entry(time):
         last_name = input("Nett dich kennenzulernen " + first_name + ". Was ist dein Nachname?")
         uni = input("Wo studierst du?")
         c_ranking.execute("INSERT INTO ranking (Vorname, Nachname, Universität, Zeit) VALUES (?, ?, ?, ?)",(first_name,last_name,uni,time))
-        c_ranking.execute("SELECT ROW_NUMBER () OVER (ORDER BY Zeit ASC) RowNum, Vorname, Nachname, Universität, Zeit FROM ranking  WHERE Zeit=?", (time, ))
-        print_pos = c_ranking.fetchall()
-        print("Du bist auf Position " + str(print_pos[0]) + " gelandet.")
+        conn_ranking.commit()
+        rank = c_ranking.execute("SELECT COUNT(*) as cnt FROM ranking WHERE Zeit<?", (time, )).fetchone()[0]
         conn_ranking.commit()
         conn_ranking.close() #only close at the very end of using SQLite3
+        print("Du bist auf Position " + str(rank) + " gelandet.")
     else:
         print("Okay, dann scheint die Zeit ja nicht so 'dolle' gewesen zu sein! Viel Glück beim nächsten Mal")
         #c_ranking.execute("SELECT ROW_NUMBER () OVER (ORDER BY Zeit ASC) RowNum, Vorname, Nachname, Universität, Zeit FROM ranking")
